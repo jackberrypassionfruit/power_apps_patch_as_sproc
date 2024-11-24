@@ -71,9 +71,9 @@ What's wrong with the Patch() function?
         ```
         DB.SP.Patch_Concurrent({
             dest_tables_names: 
-                "pipe-separated list of tables",
+                "pipe-separated table names",
             json_bodies:
-                "data as JSON"
+                "pipe-separated data as JSON"
         })
         ```
     - ex.
