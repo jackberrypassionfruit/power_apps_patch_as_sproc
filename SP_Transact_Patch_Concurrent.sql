@@ -17,7 +17,7 @@ DECLARE @output_query	NVARCHAR(MAX);
 
 SET @query_to_execute = N'';
 
-
+-- JOIN the tables and the JSON rows, so the cursor can execute on them in pairs
 DECLARE Row_Cursor CURSOR FOR
 
 SELECT
@@ -53,6 +53,7 @@ BEGIN
 
 -- Strangely, SQL variable assignments coming from Stored Proc outcomes assign to the right, unlike other languages
 EXEC [dbo].[SP_Transact_Patch] @json_body, @table_name, 0, @output_query = @output_query OUTPUT
+-- Add each query to the concurrent query
 SET @query_to_execute += @output_query
 
 

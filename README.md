@@ -35,7 +35,7 @@ What's wrong with the Patch() function?
         - Stored Procedures only accept *Strings* (as far as I know), which means that the collection has to be converted to a string of JSON to be used in the Stored Procedure
         - *See API notes in the next section*
 
-## How to Use
+## How to Use in Power Apps - INSERT
 - As expected, the API for using this stored procedures is different from that of the Patch() function:
 
     - In Power Apps Patch():
@@ -52,17 +52,17 @@ What's wrong with the Patch() function?
         Concurrent(
             Patch( 
                 'Customers', 
-                [ 
+                { 
                     name: "Leroy Jenksins",
                     occupations: "Raider"
-                ]
+                }
             ),
             Patch( 
                 'Sellers', 
-                [ 
+                { 
                     name: "Potion Seller",
                     occupations: "Sells Potions"
-                ]
+                }
             )
         )
         ```
@@ -76,21 +76,52 @@ What's wrong with the Patch() function?
                 "pipe-separated data as JSON"
         })
         ```
-    - ex.
-    ```
-    UpdateContext({
-        dest_table_list: [ table1, table2 ],
-        json_body_list:  [ data1,  data2  ]
-    });
-    
-    UpdateContext({
-        dest_table_json: Concat(dest_table_list, Value, "|"),
-        json_body_json:  Concat(json_body_list, JSON(Value, JSONFormat.IndentFour), "|")
-    });
+        - ex.
+        ```
+        ClearCollect(
+            data_customer,
+            { 
+                name: "Leroy Jenksins",
+                occupations: "Raider"
+            }
+        );
+        ClearCollect(
+            data_seller,
+            { 
+                name: "Potion Seller",
+                occupations: "Sells Potions"
+            }
+        );
 
-    DB.SP.Patch_Concurrent({
-        dest_tables_names:  dest_table_json,
-        json_bodies:        json_body_json
-    })
-    ```
+        UpdateContext({
+            dest_table_list: [ "Customers",     "Sellers"   ],
+            json_body_list:  [ data_customer,   data_seller ]
+        });
+        
+        UpdateContext({
+            dest_table_json: Concat(dest_table_list, Value, "|"),
+            json_body_json:  Concat(json_body_list, JSON(Value, JSONFormat.IndentFour), "|")
+        });
 
+        DB.SP.Patch_Concurrent({
+            dest_tables_names:  dest_table_json,
+            json_bodies:        json_body_json
+        })
+        ```
+    - There is a bit more work to package the data in a format the Stored Procedure can parse.
+    - FUTURE IMROVEMENT: If you want contribute, improving the API here would be a great place to start.
+
+## How to Use in Power Apps - UPDATE
+- The Stored Procedure can also be used to UPDATE tables in SQL Server as well!
+- Just like Patch(), this is done by passing JSON where one of the column is the primary key of the table
+- However, because my team only ever uses "pk_id" as the primary key of the table, I have hardcoded that as the value to indicate that the desired functionality is UDPATE
+- FUTURE IMPROVEMENT: This can be generalized by allow another argument to be passed: 
+    - The primary key of the table to update on
+
+## Installing the Stored Procedures
+- In SQL Server
+    - [SP_Transact_Patch] can be CREATEd to execute SQL queries as a standalone SProc
+    - [SP_Transact_Patch_Concurrent] relies on the former being CREATEd, since it helps build the concurrent transaction from each query
+- In Power Apps
+    - By default, when you import your Stored Procedure it will have the name of your database
+    - You can rename that to something shorter and easier to type, and user like the above syntax
